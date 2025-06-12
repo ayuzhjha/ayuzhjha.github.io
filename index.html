@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayush Jha | Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Import map for Three.js modules -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+      }
+    }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap');
+
+        :root {
+            --primary-color: #00e5ff;
+            --secondary-color: #00aaff;
+            --background-color: #020a1a;
+            --text-color: #e0f7ff;
+            --glow-color: rgba(0, 229, 255, 0.7);
+        }
+
+         html, body, #main-content {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+        }
+        html::-webkit-scrollbar, body::-webkit-scrollbar, #main-content::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Roboto', sans-serif;
+            overflow: hidden;
+        }
+
+        #neural-network-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4; /* Slightly increased opacity for better visibility */
+            cursor: move;
+        }
+        
+        #loader-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .arc-loader {
+            width: 150px;
+            height: 150px;
+            border: 5px solid transparent;
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+            position: relative;
+        }
+        
+        .arc-loader::before, .arc-loader::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            border: 5px solid transparent;
+        }
+
+        .arc-loader::before {
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border-top-color: var(--secondary-color);
+            animation: spin 2s linear infinite reverse;
+        }
+        
+        .arc-loader::after {
+            top: 25px;
+            left: 25px;
+            right: 25px;
+            bottom: 25px;
+            border-top-color: var(--glow-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #main-content {
+            opacity: 0;
+            transition: opacity 1s ease-in;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scroll-snap-type: y mandatory;
+        }
+
+        .section {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            scroll-snap-align: start;
+            position: relative;
+        }
+
+        .hud-panel {
+            background: rgba(2, 10, 26, 0.8);
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 0 20px var(--glow-color);
+            padding: 2rem;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            max-width: 900px;
+            width: 90%;
+            animation: fadeIn 1s ease-out forwards;
+            position: relative;
+        }
+        
+        .hud-panel::before, .hud-panel::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: var(--primary-color);
+            border-style: solid;
+        }
+
+        .hud-panel::before {
+            top: -5px;
+            left: -5px;
+            border-width: 2px 0 0 2px;
+        }
+
+        .hud-panel::after {
+            bottom: -5px;
+            right: -5px;
+            border-width: 0 2px 2px 0;
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            text-shadow: 0 0 10px var(--glow-color);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .typing-effect {
+            display: inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: .15em solid var(--primary-color);
+            animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--primary-color); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .humour-tag {
+            font-style: italic;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .social-links a {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin: 0 1rem;
+            transition: color 0.3s, text-shadow 0.3s;
+        }
+
+        .social-links a:hover {
+            color: #fff;
+            text-shadow: 0 0 15px var(--glow-color);
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .grid-item {
+            background: rgba(0, 229, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 5px;
+            border-left: 3px solid var(--primary-color);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .grid-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+        }
+
+        #audio-control {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1.25rem;
+            z-index: 50;
+        }
+
+        #mute-btn {
+            background: rgba(2, 10, 26, 0.7);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #mute-btn:hover {
+            background-color: rgba(0, 229, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader-wrapper">
+        <div class="arc-loader"></div>
+    </div>
+    
+    <!-- Audio Player -->
+    <audio id="background-music" loop>
+        <!-- You can replace this with your own MP3 file -->
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <canvas id="neural-network-canvas"></canvas>
+
+    <div id="main-content">
+        <!-- All portfolio sections remain the same -->
+        <section id="home" class="section">
+            <div class="hud-panel text-center">
+                <h1 class="title typing-effect">Ayush Jha</h1>
+                <p class="text-xl mb-4">B.Tech CSE(Hons) @XIM University</p>
+                <p class="mb-6 max-w-2xl mx-auto">
+                    A first-year student with a passion for advanced engineering, emerging tech, and creating impactful, tech-driven solutions.
+                </p>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/xaezor" target="_blank"><i class="fab fa-linkedin"></i></a>
+                    <a href="mailto:ayushjha949@gmail.com"><i class="fas fa-envelope"></i></a>
+                    <a href="tel:7294976499"><i class="fas fa-phone"></i></a>
+                </div>
+                <p class="humour-tag">Engaging in logical combat with rogue semicolons since 2024.</p>
+            </div>
+        </section>
+
+        <section id="skills" class="section">
+            <div class="hud-panel">
+                <h2 class="title">Top Skills</h2>
+                <div class="grid-container">
+                    <div class="grid-item">
+                        <h3 class="text-xl font-bold mb-2 text-white">Electronics</h3>
+                        <p>Circuit design, analysis, and probably making things beep boop.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3 class="text-xl font-bold mb-2 text-white">Web Development</h3>
+                        <p>Crafting digital experiences. Also, centering divs.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3 class="text-xl font-bold mb-2 text-white">Graphic Design</h3>
+                        <p>Making pixels look pretty and telling stories visually.</p>
+                    </div>
+                </div>
+                 <p class="humour-tag">My skills are like a browser history - extensive and sometimes surprising.</p>
+            </div>
+        </section>
+
+        <section id="experience" class="section">
+            <div class="hud-panel">
+                <h2 class="title">Experience</h2>
+                <div class="grid-container">
+                    <div class="grid-item">
+                        <h3 class="text-xl font-bold text-white">XIM ACM Student Chapter</h3>
+                        <p class="text-gray-400">April 2025 - Present</p>
+                        <p>Deputy Technical Lead - Leading technical initiatives and probably drinking too much coffee.</p>
+                        <p class="text-gray-400 mt-2">Nov 2024 - April 2025</p>
+                        <p>Technical Team Member - Where the magic (and bugs) happened.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3 class="text-xl font-bold text-white">RobogeniX</h3>
+                        <p class="text-gray-400">August 2024 - Present</p>
+                        <p>Robogenix Member - Building robots and dreaming of a world they don't take over.</p>
+                    </div>
+                </div>
+                 <p class="humour-tag">Collecting job titles like they're Pokémon cards.</p>
+            </div>
+        </section>
+        
+        <section id="certifications" class="section">
+            <div class="hud-panel">
+                <h2 class="title">Certifications</h2>
+                 <div class="grid-container">
+                    <div class="grid-item">RoboRiddle 2.0 Winner</div>
+                    <div class="grid-item">Roborace Pravaah'25</div>
+                    <div class="grid-item">Web Hackathon</div>
+                    <div class="grid-item">ACM Mindspark Winner</div>
+                    <div class="grid-item">Graphic Design Essentials</div>
+                </div>
+                <p class="humour-tag">I have more certifications than a superhero has secret identities.</p>
+            </div>
+        </section>
+
+        <section id="education" class="section">
+            <div class="hud-panel">
+                <h2 class="title">Education</h2>
+                <div class="grid-container">
+                    <div class="grid-item">
+                        <h3 class="text-xl font-bold text-white">Xavier Institute of Management(XIM Bhubaneswar)</h3>
+                        <p>Bachelor of Technology - BTech, Computer science and engineering (hons.) (July 2024)</p>
+                    </div>
+                     <div class="grid-item">
+                        <h3 class="text-xl font-bold text-white">MOTHER TERESA SR. SEC. SCHOOL</h3>
+                        <p>12th, Science (2022 - 2024)</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3 class="text-xl font-bold text-white">DAV Public School, Muzaffarpur</h3>
+                        <p>10th (2016 - 2022)</p>
+                    </div>
+                </div>
+                <p class="humour-tag">Currently enrolled in the University of "Why did I choose this major again?"... Just kidding, I love it.</p>
+            </div>
+        </section>
+    </div>
+
+    <div id="audio-control">
+        <button id="mute-btn">
+            <i class="fas fa-volume-up"></i>
+        </button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { FilmPass } from 'three/addons/postprocessing/FilmPass.js';
+        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+        
+        // --- Loader, Sound, and Music ---
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader-wrapper');
+            const mainContent = document.getElementById('main-content');
+            const audio = document.getElementById('background-music');
+
+            // Play boot-up sound
+            try {
+                const synth = new Tone.FMSynth().toDestination();
+                const now = Tone.now();
+                synth.triggerAttackRelease("C4", "8n", now);
+                synth.triggerAttackRelease("E4", "8n", now + 0.2);
+                synth.triggerAttackRelease("G4", "8n", now + 0.4);
+            } catch (e) {
+                console.error("Tone.js could not be initialized.", e);
+            }
+
+            // Play background music
+            audio.play().catch(error => {
+                console.log("Autoplay was prevented by the browser. User interaction is required to play audio.");
+            });
+
+            // Prank sequence
+            setTimeout(() => {
+                loader.innerHTML = `
+                    <div style="color: var(--primary-color); font-family: 'Orbitron', sans-serif; font-size: 1.5rem; text-align: center;">
+                        Too lazy to make a portfolio website, comeback later
+                    </div>
+                `;
+                setTimeout(() => {
+                    loader.innerHTML = `
+                        <div style="color: var(--primary-color); font-family: 'Orbitron', sans-serif; font-size: 1.5rem; text-align: center;">
+                            just kidding here you go
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        loader.style.opacity = '0';
+                        mainContent.style.opacity = '1';
+                        setTimeout(() => {
+                            loader.style.display = 'none';
+                        }, 500);
+                    }, 2000); // <-- increased from 1000 to 2000
+                }, 2000);
+            }, 1000);
+        });
+
+        // --- Audio Control ---
+        const muteBtn = document.getElementById('mute-btn');
+        const audio = document.getElementById('background-music');
+        const muteIcon = `<i class="fas fa-volume-mute"></i>`;
+        const unmuteIcon = `<i class="fas fa-volume-up"></i>`;
+
+        muteBtn.addEventListener('click', () => {
+            audio.muted = !audio.muted;
+            muteBtn.innerHTML = audio.muted ? muteIcon : unmuteIcon;
+        });
+        
+        // --- THREE.JS INTERACTIVE NEURAL NETWORK ---
+        // This code is adapted from the user-provided index.html file.
+        
+        const config = {
+            paused: false,
+            activePaletteIndex: 0,
+            currentFormation: 0,
+            densityFactor: 1
+        };
+
+        const colorPalettes = [
+            // Palette adapted to the portfolio's theme
+            [new THREE.Color(0x00e5ff), new THREE.Color(0x00aaff), new THREE.Color(0x4dabf7), new THREE.Color(0x1c7ed6)],
+        ];
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020a1a, 0.0015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1200);
+        camera.position.set(0, 5, 22);
+
+        const canvasElement = document.getElementById('neural-network-canvas');
+        // Initialize renderer with alpha for transparency
+        const renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        // Set clear color to be transparent
+        renderer.setClearColor(0x000000, 0);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        
+        // --- STARFIELD ---
+        function createStarfield() {
+            const count = 5000, pos = [];
+            for (let i = 0; i < count; i++) {
+                const r = THREE.MathUtils.randFloat(40, 600);
+                const phi = Math.acos(THREE.MathUtils.randFloatSpread(2));
+                const theta = THREE.MathUtils.randFloat(0, Math.PI * 2);
+                pos.push(
+                    r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.sin(phi) * Math.sin(theta),
+                    r * Math.cos(phi)
+                );
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            const mat = new THREE.PointsMaterial({
+                color: 0xffffff, size: 0.25, sizeAttenuation: true,
+                depthWrite: false, opacity: 0.8, transparent: true
+            });
+            return new THREE.Points(geo, mat);
+        }
+        const starField = createStarfield();
+        scene.add(starField);
+
+        // --- CONTROLS ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.rotateSpeed = 0.5;
+        controls.minDistance = 5;
+        controls.maxDistance = 100;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.1;
+        controls.enablePan = false;
+
+        // --- POST-PROCESSING ---
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.4, 0.68);
+        composer.addPass(bloomPass);
+        const filmPass = new FilmPass(0.35, 0.025, 648, false);
+        composer.addPass(filmPass);
+        composer.addPass(new OutputPass());
+
+        // --- SHADERS AND MATERIALS ---
+        const pulseUniforms = {
+            uTime: { value: 0.0 },
+            uPulsePositions: { value: [new THREE.Vector3(1e3, 1e3, 1e3), new THREE.Vector3(1e3, 1e3, 1e3), new THREE.Vector3(1e3, 1e3, 1e3)] },
+            uPulseTimes: { value: [-1e3, -1e3, -1e3] },
+            uPulseColors: { value: [new THREE.Color(1, 1, 1), new THREE.Color(1, 1, 1), new THREE.Color(1, 1, 1)] },
+            uPulseSpeed: { value: 15.0 },
+            uBaseNodeSize: { value: 0.5 },
+        };
+        const noiseFunctions = `
+        vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+        vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+        vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+        float snoise(vec3 v){
+            const vec2 C=vec2(1.0/6.0,1.0/3.0);const vec4 D=vec4(0.0,0.5,1.0,2.0);
+            vec3 i=floor(v+dot(v,C.yyy));vec3 x0=v-i+dot(i,C.xxx);vec3 g=step(x0.yzx,x0.xyz);
+            vec3 l=1.0-g;vec3 i1=min(g.xyz,l.zxy);vec3 i2=max(g.xyz,l.zxy);
+            vec3 x1=x0-i1+C.xxx;vec3 x2=x0-i2+C.yyy;vec3 x3=x0-D.yyy;i=mod289(i);
+            vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+            float n_=0.142857142857;vec3 ns=n_*D.wyz-D.xzx;
+            vec4 j=p-49.0*floor(p*ns.z*ns.z);vec4 x_=floor(j*ns.z);vec4 y_=floor(j-7.0*x_);
+            vec4 x=x_*ns.x+ns.yyyy;vec4 y=y_*ns.x+ns.yyyy;vec4 h=1.0-abs(x)-abs(y);
+            vec4 b0=vec4(x.xy,y.xy);vec4 b1=vec4(x.zw,y.zw);vec4 s0=floor(b0)*2.0+1.0;vec4 s1=floor(b1)*2.0+1.0;
+            vec4 sh=-step(h,vec4(0.0));vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+            vec3 p0=vec3(a0.xy,h.x);vec3 p1=vec3(a0.zw,h.y);vec3 p2=vec3(a1.xy,h.z);vec3 p3=vec3(a1.zw,h.w);
+            vec4 norm=inversesqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+            p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
+            m*=m;return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+        }`;
+        
+        const nodeShader = {
+            vertexShader: `${noiseFunctions}
+            attribute float nodeSize; attribute vec3 nodeColor; attribute float distanceFromRoot;
+            uniform float uTime; uniform vec3 uPulsePositions[3]; uniform float uPulseTimes[3]; uniform float uPulseSpeed; uniform float uBaseNodeSize;
+            varying vec3 vColor; varying float vPulseIntensity;
+            float getPulseIntensity(vec3 worldPos, vec3 pulsePos, float pulseTime) {
+                if (pulseTime < 0.0) return 0.0;
+                float timeSinceClick = uTime - pulseTime;
+                if (timeSinceClick < 0.0 || timeSinceClick > 3.0) return 0.0;
+                float pulseRadius = timeSinceClick * uPulseSpeed;
+                float distToClick = distance(worldPos, pulsePos);
+                return smoothstep(2.0, 0.0, abs(distToClick - pulseRadius)) * smoothstep(3.0, 0.0, timeSinceClick);
+            }
+            void main() {
+                vColor = nodeColor;
+                vec3 worldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+                float totalPulseIntensity = 0.0;
+                for (int i = 0; i < 3; i++) {
+                    totalPulseIntensity += getPulseIntensity(worldPos, uPulsePositions[i], uPulseTimes[i]);
+                }
+                vPulseIntensity = min(totalPulseIntensity, 1.0);
+                float timeScale = 0.8 + 0.2 * sin(uTime * 0.8 + distanceFromRoot * 0.2);
+                float pulseSize = nodeSize * (1.0 + vPulseIntensity * 2.0);
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                gl_PointSize = pulseSize * uBaseNodeSize * (800.0 / -mvPosition.z);
+                gl_Position = projectionMatrix * mvPosition;
+            }`,
+            fragmentShader: `
+            uniform float uTime; uniform vec3 uPulseColors[3];
+            varying vec3 vColor; varying float vPulseIntensity;
+            void main() {
+                if (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;
+                vec3 finalColor = vColor;
+                if (vPulseIntensity > 0.0) {
+                    finalColor = mix(vColor, uPulseColors[0], vPulseIntensity);
+                }
+                gl_FragColor = vec4(finalColor, 0.9);
+            }`
+        };
+
+        const connectionShader = {
+            vertexShader: `
+            attribute vec3 connectionColor;
+            varying vec3 vColor;
+            void main() {
+                vColor = connectionColor;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }`,
+            fragmentShader: `
+            uniform float uTime;
+            varying vec3 vColor;
+            void main() {
+                 gl_FragColor = vec4(vColor, 0.15);
+            }`
+        };
+        
+        let neuralNetwork = null, nodesMesh = null, connectionsMesh = null;
+        
+        // --- NETWORK GENERATION AND VISUALIZATION ---
+        class Node {
+            constructor(position, level = 0) {
+                this.position = position; this.connections = []; this.level = level;
+                this.size = THREE.MathUtils.randFloat(0.7, 1.2); this.distanceFromRoot = position.length();
+            }
+            addConnection(node) {
+                if (!this.isConnectedTo(node)) {
+                    this.connections.push(node); node.connections.push(this);
+                }
+            }
+            isConnectedTo(node) { return this.connections.includes(node); }
+        }
+
+        function generateNeuralNetwork() {
+            let nodes = [];
+            const rootNode = new Node(new THREE.Vector3(0, 0, 0), 0);
+            nodes.push(rootNode);
+            const layers = 5, nodesPerLayer = 25, layerDist = 5;
+
+            for (let i = 1; i <= layers; i++) {
+                for (let j = 0; j < nodesPerLayer * i; j++) {
+                     const r = i * layerDist + THREE.MathUtils.randFloatSpread(layerDist);
+                     const phi = Math.acos(THREE.MathUtils.randFloatSpread(2));
+                     const theta = THREE.MathUtils.randFloat(0, Math.PI * 2);
+                     const pos = new THREE.Vector3(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
+                     const node = new Node(pos, i);
+                     nodes.push(node);
+                }
+            }
+            
+            nodes.forEach(node => {
+                let sortedByDist = [...nodes].sort((a,b) => a.position.distanceTo(node.position) - b.position.distanceTo(node.position));
+                for(let i = 1; i < 5; i++){
+                    if (sortedByDist[i].level >= node.level) {
+                       node.addConnection(sortedByDist[i]);
+                    }
+                }
+            });
+            return { nodes };
+        }
+
+        function createNetworkVisualization() {
+            neuralNetwork = generateNeuralNetwork();
+            
+            const nodePositions = [], nodeSizes = [], nodeColors = [], distancesFromRoot = [];
+            neuralNetwork.nodes.forEach(node => {
+                nodePositions.push(node.position.x, node.position.y, node.position.z);
+                nodeSizes.push(node.size);
+                distancesFromRoot.push(node.distanceFromRoot);
+                const palette = colorPalettes[config.activePaletteIndex];
+                const color = palette[node.level % palette.length];
+                nodeColors.push(color.r, color.g, color.b);
+            });
+
+            const nodesGeometry = new THREE.BufferGeometry();
+            nodesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(nodePositions, 3));
+            nodesGeometry.setAttribute('nodeSize', new THREE.Float32BufferAttribute(nodeSizes, 1));
+            nodesGeometry.setAttribute('nodeColor', new THREE.Float32BufferAttribute(nodeColors, 3));
+            nodesGeometry.setAttribute('distanceFromRoot', new THREE.Float32BufferAttribute(distancesFromRoot, 1));
+
+            const nodesMaterial = new THREE.ShaderMaterial({
+                uniforms: pulseUniforms, vertexShader: nodeShader.vertexShader, fragmentShader: nodeShader.fragmentShader,
+                transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+            });
+            nodesMesh = new THREE.Points(nodesGeometry, nodesMaterial);
+            scene.add(nodesMesh);
+            
+            const linePositions = [], lineColors = [];
+            const processedConnections = new Set();
+             neuralNetwork.nodes.forEach((node, nodeIndex) => {
+                node.connections.forEach(connectedNode => {
+                    const connectedIndex = neuralNetwork.nodes.indexOf(connectedNode);
+                    const key = nodeIndex < connectedIndex ? `${nodeIndex}-${connectedIndex}` : `${connectedIndex}-${nodeIndex}`;
+                    if(!processedConnections.has(key)){
+                       linePositions.push(node.position.x, node.position.y, node.position.z);
+                       linePositions.push(connectedNode.position.x, connectedNode.position.y, connectedNode.position.z);
+                       const palette = colorPalettes[config.activePaletteIndex];
+                       const color = palette[Math.floor((node.level + connectedNode.level)/2) % palette.length];
+                       lineColors.push(color.r, color.g, color.b);
+                       lineColors.push(color.r, color.g, color.b);
+                       processedConnections.add(key);
+                    }
+                });
+            });
+
+            const linesGeometry = new THREE.BufferGeometry();
+            linesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+            linesGeometry.setAttribute('color', new THREE.Float32BufferAttribute(lineColors, 3));
+
+            const linesMaterial = new THREE.LineBasicMaterial({
+                vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, opacity: 0.15
+            });
+            connectionsMesh = new THREE.LineSegments(linesGeometry, linesMaterial);
+            scene.add(connectionsMesh);
+        }
+
+        // --- INTERACTION ---
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+        let lastPulseIndex = 0;
+
+        function triggerPulse(clientX, clientY) {
+            pointer.x = (clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(pointer, camera);
+            
+            const intersectionPlane = new THREE.Plane(camera.position.clone().negate().normalize(), 0);
+            const intersectionPoint = new THREE.Vector3();
+            raycaster.ray.intersectPlane(intersectionPlane, intersectionPoint);
+
+            const time = clock.getElapsedTime();
+            lastPulseIndex = (lastPulseIndex + 1) % 3;
+            if (nodesMesh) {
+                nodesMesh.material.uniforms.uPulsePositions.value[lastPulseIndex].copy(intersectionPoint);
+                nodesMesh.material.uniforms.uPulseTimes.value[lastPulseIndex] = time;
+                const palette = colorPalettes[config.activePaletteIndex];
+                const randomColor = palette[Math.floor(Math.random() * palette.length)];
+                nodesMesh.material.uniforms.uPulseColors.value[lastPulseIndex].copy(randomColor);
+            }
+        }
+        
+        canvasElement.addEventListener('click', (e) => {
+            triggerPulse(e.clientX, e.clientY);
+        });
+
+        // --- ANIMATION LOOP ---
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+            if (nodesMesh) nodesMesh.material.uniforms.uTime.value = t;
+            starField.rotation.y += 0.0001;
+            controls.update();
+            composer.render();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            bloomPass.resolution.set(window.innerWidth, window.innerHeight);
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // --- INITIALIZATION ---
+        createNetworkVisualization();
+        animate();
+
+    </script>
+</body>
+</html>
